@@ -1,6 +1,6 @@
 data.txt
 
-quotes.csv
+quote.csv
 
 *.py
 !crono.py
