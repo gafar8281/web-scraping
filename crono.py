@@ -8,11 +8,11 @@ import re
 import json
 
 # pandas==2.3.2
-# requests==2.32.5
 # beautifulsoup4==4.13.5
 # aiohttp==3.12.15
 
 
+'''Quote's scraper'''
 
 async def fetch(session, url):
     async with session.get(url) as content:
@@ -53,7 +53,7 @@ async def scrap_quotes(base_url, max_page, session):
     return quotes_data
 
 
-def create_table(row_data, columns, output_file='quote.csv'):  
+def create_table(row_data, columns, output_file='quote_2.csv'):  
     df = pd.DataFrame(row_data, columns= columns)
     print(df.tail(20))
     print('________________________________________')
@@ -65,24 +65,8 @@ def create_table(row_data, columns, output_file='quote.csv'):
     print(df.info())
 
 
-async def main():
-    base_url = 'https://quotes.toscrape.com/'
 
-    async with aiohttp.ClientSession() as session:
-        return await scrap_quotes(base_url=base_url, max_page= 10, session=session)
-        
-
-
-start = time.perf_counter()
-# quote_data =  asyncio.run(main()) 
-# create_table(row_data= quote_data, columns= ['Quote', 'Author'])
-
-print(f"time taken {round(time.perf_counter() - start)}sec")
-
-# 64sec - sync code
-# 2sec  - async code
-
-
+'''Book Scraper'''
 
 async def fetch_books(page_links, category, session):
     try:
@@ -155,35 +139,50 @@ async def scrape_all_books(base_url, session):
         soup = BeautifulSoup(req, 'html.parser')
 
         links = soup.select('div.side_categories a')
-        category = [l.get_text(strip=True) for l in links[1:16]]
-        page_links = [l['href'] for l in links[1:16]]    
+        category = [l.get_text(strip=True) for l in links[1:]]
+        page_links = [l['href'] for l in links[1:]]    
         
         book_details = await asyncio.gather(fetch_books(page_links, category, session))
 
         if not book_details:
             print("error fetching book data")
         
-        with open('book_data.json', 'w', encoding='utf-8') as f:
+        with open('book_data_2.json', 'w', encoding='utf-8') as f:
             # f.write(book_details)
             json.dump(book_details, f, indent=4, ensure_ascii=False)
         
         return book_details
 
 
+
+async def main():
+    base_url = 'https://quotes.toscrape.com/'
+
+    async with aiohttp.ClientSession() as session:
+        return await scrap_quotes(base_url=base_url, max_page= 10, session=session)
+    
 async def second_main():
     base_url = 'https://books.toscrape.com/index.html'
     async with aiohttp.ClientSession() as session:
         return await scrape_all_books(base_url, session)
     
 
-start = time.perf_counter()
-asyncio.run(second_main())
-print("done")
-print(' ')
-print(f"time taken {round(time.perf_counter() - start, 2)} sec")
-# 20 minutes
-# For full code to run it takes 1hr20min
+
+if __name__ == "__main__":
+    start = time.perf_counter()
+        
+    quote_data =  asyncio.run(main()) 
+    create_table(row_data= quote_data, columns= ['Quote', 'Author'])
+    print("Scraper 1 ran successfully")
+    print('') # 2 sec    
+
+    asyncio.run(second_main())
+    print("Scraper 2 ran successfully")
+    print(' ') # 14 min(1-15)    
+
+    print(f"Time taken {round(time.perf_counter() - start, 2)} sec") # 16 minute
+    
 
 
 
-# if __name__ == "__main__":
+
